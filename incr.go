@@ -64,6 +64,9 @@ func IncrNet(ipNet net.IPNet, incr int) {
 
 func to32(ip net.IP) uint32 {
 	l := len(ip)
+	if l == net.IPv6len {
+		copy(ip, net.IPv4zero)
+	}
 	return uint32(ip[l-4])<<24 |
 		uint32(ip[l-3])<<16 |
 		uint32(ip[l-2])<<8 |
