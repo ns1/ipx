@@ -23,7 +23,7 @@ func Supernet(ipN *net.IPNet, newPrefix int) *net.IPNet {
 		return &out
 	}
 
-	ip := toUint128(ipN.IP)
+	ip := to128(ipN.IP)
 
 	mask := uint128{0, 1}
 	mask.Lsh(uint(newPrefix))
@@ -31,7 +31,7 @@ func Supernet(ipN *net.IPNet, newPrefix int) *net.IPNet {
 	mask.Lsh(uint(bits - newPrefix))
 
 	ip.And(mask)
-	fromUint128(ip, out.IP)
+	from128(ip, out.IP)
 
 	return &out
 }
@@ -53,14 +53,14 @@ func Broadcast(a *net.IPNet) net.IP {
 		return out
 	}
 
-	ip := toUint128(a.IP)
+	ip := to128(a.IP)
 
 	hostMask := uint128{0, 1}
 	hostMask.Lsh(uint(bits - ones))
 	hostMask.Minus(uint128{0, 1})
 	ip.Or(hostMask)
 
-	fromUint128(ip, out)
+	from128(ip, out)
 
 	return out
 }

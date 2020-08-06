@@ -11,64 +11,71 @@ func Split(ipNet *net.IPNet, newPrefix int) NetIter {
 	if ones > newPrefix || newPrefix > bits {
 		panic(fmt.Errorf("must be in [%v, %v] but got %v", ones, bits, newPrefix))
 	}
-	return &limitNetIter{
-		iterNet(ipNet.IP, net.CIDRMask(newPrefix, bits), 1),
-		1 << uint(newPrefix-ones),
+	if ipNet.IP.To4() != nil {
+		ip := to32(ipNet.IP)
+		return &incrIP4Net{
+			incrIP4{
+				ip,
+				1 << (bits - newPrefix),
+				ip | (1<<(bits-ones) - 1),
+			},
+			((1 << newPrefix) - 1) << (bits - newPrefix),
+		}
 	}
-}
 
-type limitNetIter struct {
-	NetIter
-	rem int
-}
+	ip := to128(ipNet.IP)
 
-func (l *limitNetIter) Next(ipNet *net.IPNet) bool {
-	if l.rem == 0 {
-		return false
-	}
-	l.rem--
-	return l.NetIter.Next(ipNet)
+	incr := uint128{0, 1}
+	incr.Lsh(uint(bits - newPrefix))
+
+	broadCast := uint128{0, 1}
+	broadCast.Lsh(uint(bits - ones))
+	broadCast.Minus(uint128{0, 1})
+	broadCast.Or(ip)
+
+	mask := uint128{0, 1}
+	mask.Lsh(uint(newPrefix))
+	mask.Minus(uint128{0, 1})
+	mask.Lsh(uint(bits - newPrefix))
+
+	return &incrIP6Net{incrIP6{ip, incr, broadCast}, mask}
 }
 
 // Addresses returns all of the addresses within a network.
 func Addresses(ipNet *net.IPNet) IPIter {
 	ones, bits := ipNet.Mask.Size()
-	return &limitIPIter{
-		iterIP(ipNet.IP, 1),
-		1 << (bits - ones),
+	if ipNet.IP.To4() != nil {
+		ip := to32(ipNet.IP)
+		return &incrIP4{ip, 1, ip + (1 << (bits - ones))}
 	}
+	ip := to128(ipNet.IP)
+
+	addend := uint128{0, 1}
+	addend.Lsh(uint(bits - ones))
+
+	limit := ip
+	limit.Add(addend)
+
+	return &incrIP6{ip, uint128{0, 1}, limit}
 }
 
 // Hosts returns all of the usable addresses within a network except the network itself address and the broadcast address
 func Hosts(ipNet *net.IPNet) IPIter {
 	ones, bits := ipNet.Mask.Size()
-	return &limitIPIter{
-		&skipIter{iterIP(ipNet.IP, 1), 1},
-		(1 << (bits - ones)) - 2,
+	if ipNet.IP.To4() != nil {
+		ip := to32(ipNet.IP) + 1
+		return &incrIP4{ip, 1, ip + (1 << (bits - ones)) - 2}
 	}
-}
 
-type skipIter struct {
-	IPIter
-	skip int
-}
+	ip := to128(ipNet.IP)
+	ip.Add(uint128{0, 1})
 
-func (s *skipIter) Next(ip net.IP) bool {
-	for s.skip > 0 && s.IPIter.Next(ip) {
-		s.skip--
-	}
-	return s.IPIter.Next(ip)
-}
+	addend := uint128{0, 1}
+	addend.Lsh(uint(bits - ones))
+	addend.Minus(uint128{0, 2})
 
-type limitIPIter struct {
-	IPIter
-	rem int
-}
+	limit := ip
+	limit.Add(addend)
 
-func (l *limitIPIter) Next(ip net.IP) bool {
-	if l.rem == 0 {
-		return false
-	}
-	l.rem--
-	return l.IPIter.Next(ip)
+	return &incrIP6{ip, uint128{0, 1}, limit}
 }

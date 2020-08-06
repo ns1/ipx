@@ -20,6 +20,19 @@ func ExampleSplit() {
 	// 10.0.0.192/26
 }
 
+func ExampleSplit_IP6() {
+	c := cidr("::/24")
+	split := ipx.Split(c, 26)
+	for split.Next(c) {
+		fmt.Println(c)
+	}
+	// Output:
+	// ::/26
+	// 0:40::/26
+	// 0:80::/26
+	// 0:c0::/26
+}
+
 func BenchmarkSplit(b *testing.B) {
 	b.ReportAllocs()
 
@@ -80,7 +93,21 @@ func ExampleHosts() {
 	// 10.0.0.6
 }
 
-
+func ExampleHosts_IP6() {
+	c := cidr("::/125")
+	hosts := ipx.Hosts(c)
+	ip := make(net.IP, len(c.IP))
+	for hosts.Next(ip) {
+		fmt.Println(ip)
+	}
+	// Output:
+	// ::1
+	// ::2
+	// ::3
+	// ::4
+	// ::5
+	// ::6
+}
 
 func BenchmarkHosts(b *testing.B) {
 	b.ReportAllocs()

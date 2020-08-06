@@ -1,7 +1,5 @@
 package ipx
 
-import "net"
-
 // largely cribbed from https://github.com/davidminor/uint128
 type uint128 [2]uint64
 
@@ -73,7 +71,7 @@ func (u *uint128) Rsh(bits uint) {
 	}
 }
 
-func toUint128(ip net.IP) uint128 {
+func to128(ip []byte) uint128 {
 	return uint128{
 		uint64(ip[0])<<56 |
 			uint64(ip[1])<<48 |
@@ -94,7 +92,7 @@ func toUint128(ip net.IP) uint128 {
 	}
 }
 
-func fromUint128(u uint128, ip net.IP) {
+func from128(u uint128, ip []byte) {
 	ip[0] = byte(u[0] >> 56)
 	ip[1] = byte(u[0] >> 48)
 	ip[2] = byte(u[0] >> 40)
