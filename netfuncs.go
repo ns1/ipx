@@ -65,12 +65,12 @@ func Broadcast(a *net.IPNet) net.IP {
 	return out
 }
 
-// Subnet returns whether b is a subnet of a
+// IsSubnet returns whether b is a subnet of a
 func IsSubnet(a, b *net.IPNet) bool {
 	return a.Contains(b.IP) && maskPrefix(a.Mask, b.Mask)
 }
 
-// Subnet returns whether b is a supernet of a
+// IsSupernet returns whether b is a supernet of a
 func IsSupernet(a, b *net.IPNet) bool {
 	return IsSubnet(b, a)
 }
