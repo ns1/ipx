@@ -1,6 +1,6 @@
 # ipx
 
-[![Tests](https://github.com/jwilner/ipx/workflows/Test/badge.svg)](https://github.com/jwilner/ipx/workflows/Test/badge.svg)
+[![Tests](https://github.com/jwilner/ipx/workflows/tests/badge.svg)](https://github.com/jwilner/ipx/workflows/tests/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jwilner/ipx)](https://goreportcard.com/report/github.com/jwilner/ipx)
 [![GoDoc](https://godoc.org/github.com/jwilner/ipx?status.svg)](https://godoc.org/github.com/jwilner/ipx)
 
