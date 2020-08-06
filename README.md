@@ -17,6 +17,10 @@ func ExampleSplit() {
 }
 ```
 
-Avoids allocations whenever possible.
+See example tests for more usage.
 
-See example tests.
+## design thoughts
+
+- Coordinate on stdlib types
+- Avoid allocations whenever possible.
+- Look to python ipaddress lib for feature list
