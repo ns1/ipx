@@ -8,16 +8,82 @@ import (
 
 var maxUint128 = initMaxUint128()
 
-// IterIP returns an IPIter for the given increment
-func IterIP(incr int) IPIter {
-	return &deferredIter{incr: incr}
-}
-
-// IPIter permits iteration over a series of ips.
+// IPIter permits iteration over a series of ips. It is always start inclusive.
 type IPIter interface {
 	// Next returns true when the underlying pointer has been successfully updated
 	// with the next value.
 	Next(ip net.IP) bool
+}
+
+// NetIter permits iteration over a series of IP networks. It is always start inclusive.
+type NetIter interface {
+	// Next returns true when the underlying pointer has been successfully updated
+	// with the next value.
+	Next(ipNet net.IPNet) bool
+}
+
+// IterIP returns an Iter for the given increment over the IPs
+func IterIP(ip net.IP, incr int) IPIter {
+	return &deferredIPIter{IPIter: iterIP(ip, incr)}
+}
+
+func iterIP(ip net.IP, incr int) IPIter {
+	is4 := ip.To4() != nil
+	sub := incr < 0
+	switch {
+	case is4 && sub:
+		return newDecrIP4(ip, incr)
+	case is4:
+		return newIncrIP4(ip, incr)
+	case sub:
+		return newDecrIP6(ip, big.NewInt(int64(incr)))
+	default:
+		return newIncrIP6(ip, big.NewInt(int64(incr)))
+	}
+}
+
+// IterNet returns an iterator for the given increment starting with the provided network
+func IterNet(ipNet net.IPNet, incr int) NetIter {
+	return iterNet(ipNet.IP, ipNet.Mask, incr)
+}
+
+func iterNet(ip net.IP, mask net.IPMask, incr int) NetIter {
+	ipIter := func() IPIter {
+		ones, bits := mask.Size()
+		suffix := bits - ones
+
+		sub := incr < 0
+		is4 := ip.To4() != nil
+
+		switch {
+		case is4 && sub:
+			return newDecrIP4(ip, incr<<suffix)
+		case is4:
+			return newIncrIP4(ip, incr<<suffix)
+		case sub:
+			incrB := big.NewInt(int64(incr))
+			incrB.Lsh(incrB, uint(suffix))
+			return newDecrIP6(ip, incrB)
+		default:
+			incrB := big.NewInt(int64(incr))
+			incrB.Lsh(incrB, uint(suffix))
+			return newIncrIP6(ip, incrB)
+		}
+	}()
+	return &netIter{IPIter: &deferredIPIter{IPIter: ipIter}, mask: mask}
+}
+
+type netIter struct {
+	IPIter
+	mask net.IPMask
+}
+
+func (n *netIter) Next(ipNet net.IPNet) bool {
+	if !n.IPIter.Next(ipNet.IP) {
+		return false
+	}
+	copy(ipNet.Mask, n.mask)
+	return true
 }
 
 type decrIP4 struct {
@@ -72,48 +138,48 @@ func (d *decrIP6) Next(ip net.IP) bool {
 	return true
 }
 
-type deferredIter struct {
-	incr int
+func newDecrIP4(ip net.IP, incr int) *decrIP4 {
+	return &decrIP4{
+		v:    to32(ip),
+		decr: uint32(incr * -1),
+	}
+}
+
+func newIncrIP4(ip net.IP, incr int) *incrIP4 {
+	return &incrIP4{
+		v:    to32(ip),
+		incr: uint32(incr),
+	}
+}
+
+func newDecrIP6(ip net.IP, incr *big.Int) *decrIP6 {
+	decr := incr.Neg(incr)
+	return &decrIP6{
+		v:    to128(ip),
+		decr: decr,
+	}
+}
+
+func newIncrIP6(ip net.IP, incr *big.Int) *incrIP6 {
+	limit := new(big.Int).Sub(maxUint128, incr)
+	return &incrIP6{
+		v:     to128(ip),
+		incr:  incr,
+		limit: limit,
+	}
+}
+
+type deferredIPIter struct {
+	first bool
 	IPIter
 }
 
-func (d *deferredIter) Next(ip net.IP) bool {
-	if d.IPIter != nil {
-		return d.IPIter.Next(ip)
+func (d *deferredIPIter) Next(ip net.IP) bool {
+	if !d.first {
+		d.first = true
+		return true
 	}
-	d.IPIter = iterIP(ip, d.incr)
-	return true
-}
-
-func iterIP(ip net.IP, incr int) IPIter {
-	is4 := ip.To4() != nil
-	sub := incr < 0
-	switch {
-	case is4 && sub:
-		return &decrIP4{
-			v:    to32(ip),
-			decr: uint32(incr * -1),
-		}
-	case is4:
-		return &incrIP4{
-			v:    to32(ip),
-			incr: uint32(incr),
-		}
-	case sub:
-		decr := big.NewInt(int64(incr * -1))
-		return &decrIP6{
-			v:    to128(ip),
-			decr: decr,
-		}
-	default:
-		incr := big.NewInt(int64(incr))
-		limit := new(big.Int).Sub(maxUint128, incr)
-		return &incrIP6{
-			v:     to128(ip),
-			incr:  incr,
-			limit: limit,
-		}
-	}
+	return d.IPIter.Next(ip)
 }
 
 func initMaxUint128() *big.Int {
