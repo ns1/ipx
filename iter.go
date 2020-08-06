@@ -1,8 +1,12 @@
 package ipx
 
 import (
-	"math"
 	"net"
+)
+
+const (
+	maxUint32 = 1<<32 - 1
+	maxUint64 = 1<<64 - 1
 )
 
 // IPIter permits iteration over a series of ips. It is always start inclusive.
@@ -31,14 +35,14 @@ func iterIP(ip net.IP, incr int) IPIter {
 	case is4 && sub:
 		return &decrIP4{to32(ip), uint32(incr * -1), 0}
 	case is4:
-		return &incrIP4{to32(ip), uint32(incr), math.MaxUint32}
+		return &incrIP4{to32(ip), uint32(incr), maxUint32}
 	case sub:
 		return &decrIP6{toUint128(ip), uint128{0, uint64(incr * -1)}, uint128{}}
 	default:
 		return &incrIP6{
 			toUint128(ip),
 			uint128{0, uint64(incr)},
-			uint128{math.MaxUint64, math.MaxUint64},
+			uint128{maxUint64, maxUint64},
 		}
 	}
 }
@@ -60,7 +64,7 @@ func iterNet(ip net.IP, mask net.IPMask, incr int) NetIter {
 		case is4 && sub:
 			return &decrIP4{to32(ip), uint32(incr*-1) << suffix, 0}
 		case is4:
-			return &incrIP4{to32(ip), uint32(incr) << suffix, math.MaxUint32}
+			return &incrIP4{to32(ip), uint32(incr) << suffix, maxUint32}
 		case sub:
 			decrB := uint128{0, uint64(incr * -1)}
 			decrB.Lsh(uint(suffix))
@@ -68,7 +72,7 @@ func iterNet(ip net.IP, mask net.IPMask, incr int) NetIter {
 		default:
 			incrB := uint128{0, uint64(incr)}
 			incrB.Lsh(uint(suffix))
-			return &incrIP6{toUint128(ip), incrB, uint128{math.MaxUint64, math.MaxUint64}}
+			return &incrIP6{toUint128(ip), incrB, uint128{maxUint64, maxUint64}}
 		}
 	}()
 	return &netIter{IPIter: ipIter, mask: mask}
