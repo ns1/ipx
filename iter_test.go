@@ -30,10 +30,10 @@ func ExampleIterIP() {
 func ExampleIterNet() {
 	ipN := cidr("10.0.0.0/16")
 	for i, iter := 0, ipx.IterNet(ipN, 100); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN.String())
+		fmt.Println(ipN)
 	}
 	for i, iter := 0, ipx.IterNet(ipN, -100); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN.String())
+		fmt.Println(ipN)
 	}
 	// Output:
 	// 10.0.0.0/16
@@ -51,10 +51,10 @@ func ExampleIterNet() {
 func ExampleIterNet_IP6() {
 	ipN := cidr("::/64")
 	for i, iter := 0, ipx.IterNet(ipN, 1e18); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN.String())
+		fmt.Println(ipN)
 	}
 	for i, iter := 0, ipx.IterNet(ipN, -1e18); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN.String())
+		fmt.Println(ipN)
 	}
 	// Output:
 	// ::/64

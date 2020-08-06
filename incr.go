@@ -2,7 +2,6 @@ package ipx
 
 import (
 	"errors"
-	"math/big"
 	"net"
 )
 
@@ -23,13 +22,17 @@ func IncrIP(ip net.IP, incr int) {
 	}
 
 	// ipv6
-	b := to128(ip)
-	b.Add(b, big.NewInt(int64(incr)))
-	from128(b, ip)
+	u := toUint128(ip)
+	if incr >= 0 {
+		u.Add(uint128{0, uint64(incr)})
+	} else {
+		u.Minus(uint128{0, uint64(incr * -1)})
+	}
+	fromUint128(u, ip)
 }
 
 // IncrNet steps to the next net of the same mask
-func IncrNet(ipNet net.IPNet, incr int) {
+func IncrNet(ipNet *net.IPNet, incr int) {
 	if ipNet.IP == nil {
 		panic(errors.New("IP cannot be nil"))
 	}
@@ -50,23 +53,24 @@ func IncrNet(ipNet net.IPNet, incr int) {
 		return
 	}
 
-	b := to128(ipNet.IP)
+	b := toUint128(ipNet.IP)
 
 	ones, bits := ipNet.Mask.Size()
 	suffix := uint(bits - ones)
 
-	b.Rsh(b, suffix)
-	b.Add(b, big.NewInt(int64(incr)))
-	b.Lsh(b, suffix)
+	b.Rsh(suffix)
+	if incr >= 0 {
+		b.Add(uint128{0, uint64(incr)})
+	} else {
+		b.Minus(uint128{0, uint64(incr * -1)})
+	}
+	b.Lsh(suffix)
 
-	from128(b, ipNet.IP)
+	fromUint128(b, ipNet.IP)
 }
 
 func to32(ip net.IP) uint32 {
 	l := len(ip)
-	if l == net.IPv6len {
-		copy(ip, net.IPv4zero)
-	}
 	return uint32(ip[l-4])<<24 |
 		uint32(ip[l-3])<<16 |
 		uint32(ip[l-2])<<8 |
@@ -79,17 +83,4 @@ func from32(n uint32, ip net.IP) {
 	ip[l-3] = uint8(n >> 16)
 	ip[l-2] = uint8(n >> 8)
 	ip[l-1] = uint8(n)
-}
-
-func to128(ip net.IP) *big.Int {
-	var i big.Int
-	i.SetBytes(ip)
-	return &i
-}
-
-func from128(n *big.Int, ip net.IP) {
-	copy(ip, net.IPv6zero)
-
-	bts := n.Bytes()
-	copy(ip[len(ip)-len(bts):], bts)
 }

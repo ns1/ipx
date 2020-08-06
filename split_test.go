@@ -4,19 +4,35 @@ import (
 	"fmt"
 	"github.com/jwilner/ipx"
 	"net"
+	"testing"
 )
 
 func ExampleSplit() {
 	c := cidr("10.0.0.0/24")
 	split := ipx.Split(c, 26)
 	for split.Next(c) {
-		fmt.Println(c.String())
+		fmt.Println(c)
 	}
 	// Output:
 	// 10.0.0.0/26
 	// 10.0.0.64/26
 	// 10.0.0.128/26
 	// 10.0.0.192/26
+}
+
+func BenchmarkSplit(b *testing.B) {
+	b.ReportAllocs()
+
+	c := cidr("10.0.0.0/24")
+
+	ipN := net.IPNet{IP: make(net.IP, len(c.IP)), Mask: make(net.IPMask, len(c.Mask))}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for split := ipx.Split(c, 26); split.Next(&ipN); {
+		}
+	}
 }
 
 func ExampleAddresses() {
@@ -33,6 +49,21 @@ func ExampleAddresses() {
 	// 10.0.0.3
 }
 
+func BenchmarkAddresses(b *testing.B) {
+	b.ReportAllocs()
+
+	c := cidr("10.0.0.0/30")
+
+	ip := make(net.IP, len(c.IP))
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for addrs := ipx.Addresses(c); addrs.Next(ip); {
+		}
+	}
+}
+
 func ExampleHosts() {
 	c := cidr("10.0.0.0/29")
 	hosts := ipx.Hosts(c)
@@ -47,4 +78,21 @@ func ExampleHosts() {
 	// 10.0.0.4
 	// 10.0.0.5
 	// 10.0.0.6
+}
+
+
+
+func BenchmarkHosts(b *testing.B) {
+	b.ReportAllocs()
+
+	c := cidr("10.0.0.0/30")
+
+	ip := make(net.IP, len(c.IP))
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for hosts := ipx.Hosts(c); hosts.Next(ip); {
+		}
+	}
 }
