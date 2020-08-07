@@ -36,7 +36,7 @@ func (u uint128) Add(addend uint128) uint128 {
 	u.H += addend.H
 	u.L += addend.L
 	if u.L < old { // wrapped
-		u.H += 1
+		u.H++
 	}
 	return u
 }
@@ -46,7 +46,7 @@ func (u uint128) Minus(addend uint128) uint128 {
 	u.H -= addend.H
 	u.L -= addend.L
 	if u.L > old { // wrapped
-		u.H -= 1
+		u.H--
 	}
 	return u
 }

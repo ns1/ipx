@@ -34,17 +34,47 @@ func ExampleSplit_IP6() {
 }
 
 func BenchmarkSplit(b *testing.B) {
-	b.ReportAllocs()
+	type bench struct {
+		cidr      string
+		newPrefix int
+	}
+	for _, g := range []struct {
+		name    string
+		benches []bench
+	}{
+		{
+			"ipv4",
+			[]bench{
+				{"192.0.2.0/24", 30},
+				{"192.0.2.0/24", 28},
+			},
+		},
+		{
+			"ipv6",
+			[]bench{
+				{"::/24", 30},
+				{"::/24", 28},
+			},
+		},
+	} {
+		b.Run(g.name, func(b *testing.B) {
+			for _, c := range g.benches {
+				ipN := cidr(c.cidr)
+				ones, _ := ipN.Mask.Size()
+				b.Run(fmt.Sprintf("%v-%v", ones, c.newPrefix), func(b *testing.B) {
+					b.ReportAllocs()
+					tgt := net.IPNet{IP: make(net.IP, len(ipN.IP)), Mask: make(net.IPMask, len(ipN.Mask))}
 
-	c := cidr("10.0.0.0/24")
+					b.ResetTimer()
 
-	ipN := net.IPNet{IP: make(net.IP, len(c.IP)), Mask: make(net.IPMask, len(c.Mask))}
+					for i := 0; i < b.N; i++ {
+						for split := ipx.Split(ipN, c.newPrefix); split.Next(&tgt); {
+						}
+					}
 
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		for split := ipx.Split(c, 26); split.Next(&ipN); {
-		}
+				})
+			}
+		})
 	}
 }
 
@@ -63,17 +93,43 @@ func ExampleAddresses() {
 }
 
 func BenchmarkAddresses(b *testing.B) {
-	b.ReportAllocs()
+	for _, g := range []struct {
+		name  string
+		cidrs []string
+	}{
+		{
+			"ipv4",
+			[]string{
+				"10.0.0.0/30", // 4
+				"10.0.0.0/24", // 256
+			},
+		},
+		{
+			"ipv6",
+			[]string{
+				"::/126", // 4
+				"::/120", // 256
+			},
+		},
+	} {
+		b.Run(g.name, func(b *testing.B) {
+			for _, c := range g.cidrs {
+				ipN := cidr(c)
+				ones, _ := ipN.Mask.Size()
+				b.Run(fmt.Sprint(ones), func(b *testing.B) {
+					b.ReportAllocs()
 
-	c := cidr("10.0.0.0/30")
+					ip := make(net.IP, len(ipN.IP))
 
-	ip := make(net.IP, len(c.IP))
+					b.ResetTimer()
 
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		for addrs := ipx.Addresses(c); addrs.Next(ip); {
-		}
+					for i := 0; i < b.N; i++ {
+						for hosts := ipx.Addresses(ipN); hosts.Next(ip); {
+						}
+					}
+				})
+			}
+		})
 	}
 }
 
@@ -110,16 +166,42 @@ func ExampleHosts_IP6() {
 }
 
 func BenchmarkHosts(b *testing.B) {
-	b.ReportAllocs()
+	for _, g := range []struct {
+		name  string
+		cidrs []string
+	}{
+		{
+			"ipv4",
+			[]string{
+				"10.0.0.0/30", // 4-2
+				"10.0.0.0/24", // 256-2
+			},
+		},
+		{
+			"ipv6",
+			[]string{
+				"::/126", // 4-2
+				"::/120", // 256-2
+			},
+		},
+	} {
+		b.Run(g.name, func(b *testing.B) {
+			for _, c := range g.cidrs {
+				ipN := cidr(c)
+				ones, _ := ipN.Mask.Size()
+				b.Run(fmt.Sprint(ones), func(b *testing.B) {
+					b.ReportAllocs()
 
-	c := cidr("10.0.0.0/30")
+					ip := make(net.IP, len(ipN.IP))
 
-	ip := make(net.IP, len(c.IP))
+					b.ResetTimer()
 
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		for hosts := ipx.Hosts(c); hosts.Next(ip); {
-		}
+					for i := 0; i < b.N; i++ {
+						for hosts := ipx.Hosts(ipN); hosts.Next(ip); {
+						}
+					}
+				})
+			}
+		})
 	}
 }

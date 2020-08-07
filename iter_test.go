@@ -50,25 +50,46 @@ func ExampleIterIP_IP6() {
 }
 
 func BenchmarkIterIP(b *testing.B) {
-	benchmarkIterIP(b, net.ParseIP("10.0.0.0"), 100)
-}
+	type bench struct {
+		ip   string
+		incr int
+	}
+	for _, g := range []struct {
+		name    string
+		benches []bench
+	}{
+		{
+			"ipv4",
+			[]bench{
+				{"10.0.0.0", 100},
+			},
+		},
+		{
+			"ipv6",
+			[]bench{
+				{"::", 100},
+			},
+		},
+	} {
+		b.Run(g.name, func(b *testing.B) {
+			for _, c := range g.benches {
+				ip := net.ParseIP(c.ip)
+				b.Run(fmt.Sprint(c.incr), func(b *testing.B) {
+					b.ReportAllocs()
 
-func BenchmarkIterIP_IP6(b *testing.B) {
-	benchmarkIterIP(b, net.ParseIP("::"), 100)
-}
+					tgt := make(net.IP, len(ip))
 
-func benchmarkIterIP(b *testing.B, ip net.IP, step int) {
-	b.ReportAllocs()
+					b.ResetTimer()
 
-	tgt := make(net.IP, len(ip))
-
-	b.ResetTimer()
-
-	iter := ipx.IterIP(ip, step)
-	for i := 0; i < b.N; i++ {
-		if !iter.Next(tgt) {
-			iter = ipx.IterIP(ip, step)
-		}
+					iter := ipx.IterIP(ip, c.incr)
+					for i := 0; i < b.N; i++ {
+						if !iter.Next(tgt) {
+							iter = ipx.IterIP(ip, c.incr)
+						}
+					}
+				})
+			}
+		})
 	}
 }
 
@@ -115,24 +136,48 @@ func ExampleIterNet_IP6() {
 }
 
 func BenchmarkIterNet(b *testing.B) {
-	benchmarkIterNet(b, cidr("10.0.0.0/16"), 100)
-}
+	type bench struct {
+		cidr string
+		incr int
+	}
+	for _, g := range []struct {
+		name    string
+		benches []bench
+	}{
+		{
+			"ipv4",
+			[]bench{
+				{"10.0.0.0/16", 100},
+				{"192.0.2.0/24", 1},
+			},
+		},
+		{
+			"ipv6",
+			[]bench{
+				{"::/64", 100},
+				{"::/120", 1},
+			},
+		},
+	} {
+		b.Run(g.name, func(b *testing.B) {
+			for _, c := range g.benches {
+				ipN := cidr(c.cidr)
+				ones, _ := ipN.Mask.Size()
+				b.Run(fmt.Sprintf("%v-%v", ones, c.incr), func(b *testing.B) {
+					b.ReportAllocs()
 
-func BenchmarkIterNet_IP6(b *testing.B) {
-	benchmarkIterNet(b, cidr("::/64"), 100)
-}
+					n := &net.IPNet{IP: make(net.IP, len(ipN.IP)), Mask: make(net.IPMask, len(ipN.Mask))}
 
-func benchmarkIterNet(b *testing.B, ipN *net.IPNet, incr int) {
-	b.ReportAllocs()
+					b.ResetTimer()
 
-	n := &net.IPNet{IP: make(net.IP, len(ipN.IP)), Mask: make(net.IPMask, len(ipN.Mask))}
-
-	b.ResetTimer()
-
-	iter := ipx.IterNet(ipN, incr)
-	for i := 0; i < b.N; i++ {
-		if !iter.Next(n) {
-			iter = ipx.IterNet(ipN, incr)
-		}
+					iter := ipx.IterNet(ipN, c.incr)
+					for i := 0; i < b.N; i++ {
+						if !iter.Next(n) {
+							iter = ipx.IterNet(ipN, c.incr)
+						}
+					}
+				})
+			}
+		})
 	}
 }
