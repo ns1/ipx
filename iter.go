@@ -71,23 +71,19 @@ func IterNet(ipNet *net.IPNet, incr int) NetIter {
 			to32(ipNet.Mask),
 		}
 	case sub:
-		decrB := uint128{0, uint64(incr * -1)}
-		decrB.Lsh(uint(suffix))
 		return &decrIP6Net{
 			decrIP6{
 				to128(ipNet.IP),
-				decrB,
+				uint128{0, uint64(incr * -1)}.Lsh(uint(suffix)),
 				uint128{},
 			},
 			to128(ipNet.Mask),
 		}
 	default:
-		incrB := uint128{0, uint64(incr)}
-		incrB.Lsh(uint(suffix))
 		return &incrIP6Net{
 			incrIP6{
 				to128(ipNet.IP),
-				incrB,
+				uint128{0, uint64(incr)}.Lsh(uint(suffix)),
 				uint128{maxUint64, maxUint64},
 			},
 			to128(ipNet.Mask),
@@ -156,7 +152,7 @@ func (i *incrIP6) Next(ip net.IP) bool {
 		return false
 	}
 	from128(i.v, ip)
-	i.v.Add(i.incr)
+	i.v = i.v.Add(i.incr)
 	return true
 }
 
@@ -182,7 +178,7 @@ func (d *decrIP6) Next(ip net.IP) bool {
 		return false
 	}
 	from128(d.v, ip)
-	d.v.Minus(d.decr)
+	d.v = d.v.Minus(d.decr)
 	return true
 }
 

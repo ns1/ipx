@@ -25,18 +25,17 @@ func Split(ipNet *net.IPNet, newPrefix int) NetIter {
 
 	ip := to128(ipNet.IP)
 
-	incr := uint128{0, 1}
-	incr.Lsh(uint(bits - newPrefix))
+	incr := uint128{0, 1}.Lsh(uint(bits - newPrefix))
 
-	broadCast := uint128{0, 1}
-	broadCast.Lsh(uint(bits - ones))
-	broadCast.Minus(uint128{0, 1})
-	broadCast.Or(ip)
+	broadCast := uint128{0, 1}.
+		Lsh(uint(bits - ones)).
+		Minus(uint128{0, 1}).
+		Or(ip)
 
-	mask := uint128{0, 1}
-	mask.Lsh(uint(newPrefix))
-	mask.Minus(uint128{0, 1})
-	mask.Lsh(uint(bits - newPrefix))
+	mask := uint128{0, 1}.
+		Lsh(uint(newPrefix)).
+		Minus(uint128{0, 1}).
+		Lsh(uint(bits - newPrefix))
 
 	return &incrIP6Net{incrIP6{ip, incr, broadCast}, mask}
 }
@@ -50,13 +49,11 @@ func Addresses(ipNet *net.IPNet) IPIter {
 	}
 	ip := to128(ipNet.IP)
 
-	addend := uint128{0, 1}
-	addend.Lsh(uint(bits - ones))
-
-	limit := ip
-	limit.Add(addend)
-
-	return &incrIP6{ip, uint128{0, 1}, limit}
+	return &incrIP6{
+		ip,
+		uint128{0, 1},
+		ip.Add(uint128{0, 1}.Lsh(uint(bits - ones))),
+	}
 }
 
 // Hosts returns all of the usable addresses within a network except the network itself address and the broadcast address
@@ -67,15 +64,11 @@ func Hosts(ipNet *net.IPNet) IPIter {
 		return &incrIP4{ip, 1, ip + (1 << (bits - ones)) - 2}
 	}
 
-	ip := to128(ipNet.IP)
-	ip.Add(uint128{0, 1})
+	ip := to128(ipNet.IP).Add(uint128{0, 1})
 
-	addend := uint128{0, 1}
-	addend.Lsh(uint(bits - ones))
-	addend.Minus(uint128{0, 2})
+	addend := uint128{0, 1}.
+		Lsh(uint(bits - ones)).
+		Minus(uint128{0, 2})
 
-	limit := ip
-	limit.Add(addend)
-
-	return &incrIP6{ip, uint128{0, 1}, limit}
+	return &incrIP6{ip, uint128{0, 1}, ip.Add(addend)}
 }

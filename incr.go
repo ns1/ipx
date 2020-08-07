@@ -24,9 +24,9 @@ func IncrIP(ip net.IP, incr int) {
 	// ipv6
 	u := to128(ip)
 	if incr >= 0 {
-		u.Add(uint128{0, uint64(incr)})
+		u = u.Add(uint128{0, uint64(incr)})
 	} else {
-		u.Minus(uint128{0, uint64(incr * -1)})
+		u = u.Minus(uint128{0, uint64(incr * -1)})
 	}
 	from128(u, ip)
 }
@@ -58,13 +58,13 @@ func IncrNet(ipNet *net.IPNet, incr int) {
 	ones, bits := ipNet.Mask.Size()
 	suffix := uint(bits - ones)
 
-	b.Rsh(suffix)
+	b = b.Rsh(suffix)
 	if incr >= 0 {
-		b.Add(uint128{0, uint64(incr)})
+		b = b.Add(uint128{0, uint64(incr)})
 	} else {
-		b.Minus(uint128{0, uint64(incr * -1)})
+		b = b.Minus(uint128{0, uint64(incr * -1)})
 	}
-	b.Lsh(suffix)
+	b = b.Lsh(suffix)
 
 	from128(b, ipNet.IP)
 }

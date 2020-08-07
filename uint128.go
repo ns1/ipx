@@ -5,14 +5,16 @@ type uint128 struct {
 	H, L uint64
 }
 
-func (u *uint128) And(other uint128) {
+func (u uint128) And(other uint128) uint128 {
 	u.H &= other.H
 	u.L &= other.L
+	return u
 }
 
-func (u *uint128) Or(other uint128) {
+func (u uint128) Or(other uint128) uint128 {
 	u.H |= other.H
 	u.L |= other.L
+	return u
 }
 
 func (u uint128) Cmp(other uint128) int {
@@ -29,25 +31,27 @@ func (u uint128) Cmp(other uint128) int {
 	}
 }
 
-func (u *uint128) Add(addend uint128) {
+func (u uint128) Add(addend uint128) uint128 {
 	old := u.L
 	u.H += addend.H
 	u.L += addend.L
 	if u.L < old { // wrapped
 		u.H += 1
 	}
+	return u
 }
 
-func (u *uint128) Minus(addend uint128) {
+func (u uint128) Minus(addend uint128) uint128 {
 	old := u.L
 	u.H -= addend.H
 	u.L -= addend.L
 	if u.L > old { // wrapped
 		u.H -= 1
 	}
+	return u
 }
 
-func (u *uint128) Lsh(bits uint) {
+func (u uint128) Lsh(bits uint) uint128 {
 	switch {
 	case bits >= 128:
 		u.H, u.L = 0, 0
@@ -58,9 +62,10 @@ func (u *uint128) Lsh(bits uint) {
 		u.H |= u.L >> (64 - bits) // set top with bits that cross from bottom
 		u.L <<= bits
 	}
+	return u
 }
 
-func (u *uint128) Rsh(bits uint) {
+func (u uint128) Rsh(bits uint) uint128 {
 	switch {
 	case bits >= 128:
 		u.H, u.L = 0, 0
@@ -71,6 +76,7 @@ func (u *uint128) Rsh(bits uint) {
 		u.L |= u.H << (64 - bits) // set bottom with bits that cross from top
 		u.H >>= bits
 	}
+	return u
 }
 
 func to128(ip []byte) uint128 {
