@@ -1,26 +1,28 @@
 package ipx
 
 // largely cribbed from https://github.com/davidminor/uint128
-type uint128 [2]uint64
+type uint128 struct {
+	H, L uint64
+}
 
 func (u *uint128) And(other uint128) {
-	u[0] &= other[0]
-	u[1] &= other[1]
+	u.H &= other.H
+	u.L &= other.L
 }
 
 func (u *uint128) Or(other uint128) {
-	u[0] |= other[0]
-	u[1] |= other[1]
+	u.H |= other.H
+	u.L |= other.L
 }
 
 func (u uint128) Cmp(other uint128) int {
 	switch {
-	case u[0] > other[0]:
+	case u.H > other.H:
 		return 1
-	case u[0] < other[0],
-		u[1] < other[1]:
+	case u.H < other.H,
+		u.L < other.L:
 		return -1
-	case u[1] > other[1]:
+	case u.L > other.L:
 		return 1
 	default:
 		return 0
@@ -28,46 +30,46 @@ func (u uint128) Cmp(other uint128) int {
 }
 
 func (u *uint128) Add(addend uint128) {
-	old := u[1]
-	u[0] += addend[0]
-	u[1] += addend[1]
-	if u[1] < old { // wrapped
-		u[0] += 1
+	old := u.L
+	u.H += addend.H
+	u.L += addend.L
+	if u.L < old { // wrapped
+		u.H += 1
 	}
 }
 
 func (u *uint128) Minus(addend uint128) {
-	old := u[1]
-	u[0] -= addend[0]
-	u[1] -= addend[1]
-	if u[1] > old { // wrapped
-		u[0] -= 1
+	old := u.L
+	u.H -= addend.H
+	u.L -= addend.L
+	if u.L > old { // wrapped
+		u.H -= 1
 	}
 }
 
 func (u *uint128) Lsh(bits uint) {
 	switch {
 	case bits >= 128:
-		u[0], u[1] = 0, 0
+		u.H, u.L = 0, 0
 	case bits >= 64:
-		u[0], u[1] = u[1]<<(bits-64), 0
+		u.H, u.L = u.L<<(bits-64), 0
 	default:
-		u[0] <<= bits
-		u[0] |= u[1] >> (64 - bits) // set top with bits that cross from bottom
-		u[1] <<= bits
+		u.H <<= bits
+		u.H |= u.L >> (64 - bits) // set top with bits that cross from bottom
+		u.L <<= bits
 	}
 }
 
 func (u *uint128) Rsh(bits uint) {
 	switch {
 	case bits >= 128:
-		u[0], u[1] = 0, 0
+		u.H, u.L = 0, 0
 	case bits >= 64:
-		u[0], u[1] = 0, u[0]>>(bits-64)
+		u.H, u.L = 0, u.H>>(bits-64)
 	default:
-		u[1] >>= bits
-		u[1] |= u[0] << (64 - bits) // set bottom with bits that cross from top
-		u[0] >>= bits
+		u.L >>= bits
+		u.L |= u.H << (64 - bits) // set bottom with bits that cross from top
+		u.H >>= bits
 	}
 }
 
@@ -93,20 +95,20 @@ func to128(ip []byte) uint128 {
 }
 
 func from128(u uint128, ip []byte) {
-	ip[0] = byte(u[0] >> 56)
-	ip[1] = byte(u[0] >> 48)
-	ip[2] = byte(u[0] >> 40)
-	ip[3] = byte(u[0] >> 32)
-	ip[4] = byte(u[0] >> 24)
-	ip[5] = byte(u[0] >> 16)
-	ip[6] = byte(u[0] >> 8)
-	ip[7] = byte(u[0])
-	ip[8] = byte(u[1] >> 56)
-	ip[9] = byte(u[1] >> 48)
-	ip[10] = byte(u[1] >> 40)
-	ip[11] = byte(u[1] >> 32)
-	ip[12] = byte(u[1] >> 24)
-	ip[13] = byte(u[1] >> 16)
-	ip[14] = byte(u[1] >> 8)
-	ip[15] = byte(u[1])
+	ip[0] = byte(u.H >> 56)
+	ip[1] = byte(u.H >> 48)
+	ip[2] = byte(u.H >> 40)
+	ip[3] = byte(u.H >> 32)
+	ip[4] = byte(u.H >> 24)
+	ip[5] = byte(u.H >> 16)
+	ip[6] = byte(u.H >> 8)
+	ip[7] = byte(u.H)
+	ip[8] = byte(u.L >> 56)
+	ip[9] = byte(u.L >> 48)
+	ip[10] = byte(u.L >> 40)
+	ip[11] = byte(u.L >> 32)
+	ip[12] = byte(u.L >> 24)
+	ip[13] = byte(u.L >> 16)
+	ip[14] = byte(u.L >> 8)
+	ip[15] = byte(u.L)
 }
