@@ -9,11 +9,12 @@ import (
 
 func ExampleIterIP() {
 	ip := net.ParseIP("10.0.0.0")
-	for i, iter := 0, ipx.IterIP(ip, 100); i < 5 && iter.Next(ip); i++ {
+	for i, iter := 0, ipx.IterIP(ip, 100); i < 5 && iter.Next(); i++ {
+		ip = iter.IP()
 		fmt.Println(ip)
 	}
-	for i, iter := 0, ipx.IterIP(ip, -100); i < 5 && iter.Next(ip); i++ {
-		fmt.Println(ip)
+	for i, iter := 0, ipx.IterIP(ip, -100); i < 5 && iter.Next(); i++ {
+		fmt.Println(iter.IP())
 	}
 	// Output:
 	// 10.0.0.0
@@ -30,11 +31,12 @@ func ExampleIterIP() {
 
 func ExampleIterIP_IP6() {
 	ip := net.ParseIP("::")
-	for i, iter := 0, ipx.IterIP(ip, 1e18); i < 5 && iter.Next(ip); i++ {
+	for i, iter := 0, ipx.IterIP(ip, 1e18); i < 5 && iter.Next(); i++ {
+		ip = iter.IP()
 		fmt.Println(ip)
 	}
-	for i, iter := 0, ipx.IterIP(ip, -1e18); i < 5 && iter.Next(ip); i++ {
-		fmt.Println(ip)
+	for i, iter := 0, ipx.IterIP(ip, -1e18); i < 5 && iter.Next(); i++ {
+		fmt.Println(iter.IP())
 	}
 	// Output:
 	// ::
@@ -77,14 +79,10 @@ func BenchmarkIterIP(b *testing.B) {
 				b.Run(fmt.Sprint(c.incr), func(b *testing.B) {
 					b.ReportAllocs()
 
-					tgt := make(net.IP, len(ip))
-
-					b.ResetTimer()
-
 					iter := ipx.IterIP(ip, c.incr)
 					for i := 0; i < b.N; i++ {
-						if !iter.Next(tgt) {
-							iter = ipx.IterIP(ip, c.incr)
+						if !iter.Next() {
+							iter = ipx.IterIP(iter.IP(), c.incr)
 						}
 					}
 				})
@@ -95,11 +93,12 @@ func BenchmarkIterIP(b *testing.B) {
 
 func ExampleIterNet() {
 	ipN := cidr("10.0.0.0/16")
-	for i, iter := 0, ipx.IterNet(ipN, 100); i < 5 && iter.Next(ipN); i++ {
+	for i, iter := 0, ipx.IterNet(ipN, 100); i < 5 && iter.Next(); i++ {
+		ipN = iter.Net()
 		fmt.Println(ipN)
 	}
-	for i, iter := 0, ipx.IterNet(ipN, -100); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN)
+	for i, iter := 0, ipx.IterNet(ipN, -100); i < 5 && iter.Next(); i++ {
+		fmt.Println(iter.Net())
 	}
 	// Output:
 	// 10.0.0.0/16
@@ -116,11 +115,12 @@ func ExampleIterNet() {
 
 func ExampleIterNet_IP6() {
 	ipN := cidr("::/64")
-	for i, iter := 0, ipx.IterNet(ipN, 1e18); i < 5 && iter.Next(ipN); i++ {
+	for i, iter := 0, ipx.IterNet(ipN, 1e18); i < 5 && iter.Next(); i++ {
+		ipN = iter.Net()
 		fmt.Println(ipN)
 	}
-	for i, iter := 0, ipx.IterNet(ipN, -1e18); i < 5 && iter.Next(ipN); i++ {
-		fmt.Println(ipN)
+	for i, iter := 0, ipx.IterNet(ipN, -1e18); i < 5 && iter.Next(); i++ {
+		fmt.Println(iter.Net())
 	}
 	// Output:
 	// ::/64
@@ -166,13 +166,9 @@ func BenchmarkIterNet(b *testing.B) {
 				b.Run(fmt.Sprintf("%v-%v", ones, c.incr), func(b *testing.B) {
 					b.ReportAllocs()
 
-					n := &net.IPNet{IP: make(net.IP, len(ipN.IP)), Mask: make(net.IPMask, len(ipN.Mask))}
-
-					b.ResetTimer()
-
 					iter := ipx.IterNet(ipN, c.incr)
 					for i := 0; i < b.N; i++ {
-						if !iter.Next(n) {
+						if !iter.Next() {
 							iter = ipx.IterNet(ipN, c.incr)
 						}
 					}

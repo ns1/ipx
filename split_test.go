@@ -3,15 +3,14 @@ package ipx_test
 import (
 	"fmt"
 	"github.com/jwilner/ipx"
-	"net"
 	"testing"
 )
 
 func ExampleSplit() {
 	c := cidr("10.0.0.0/24")
 	split := ipx.Split(c, 26)
-	for split.Next(c) {
-		fmt.Println(c)
+	for split.Next() {
+		fmt.Println(split.Net())
 	}
 	// Output:
 	// 10.0.0.0/26
@@ -23,8 +22,8 @@ func ExampleSplit() {
 func ExampleSplit_IP6() {
 	c := cidr("::/24")
 	split := ipx.Split(c, 26)
-	for split.Next(c) {
-		fmt.Println(c)
+	for split.Next() {
+		fmt.Println(split.Net())
 	}
 	// Output:
 	// ::/26
@@ -63,12 +62,9 @@ func BenchmarkSplit(b *testing.B) {
 				ones, _ := ipN.Mask.Size()
 				b.Run(fmt.Sprintf("%v-%v", ones, c.newPrefix), func(b *testing.B) {
 					b.ReportAllocs()
-					tgt := net.IPNet{IP: make(net.IP, len(ipN.IP)), Mask: make(net.IPMask, len(ipN.Mask))}
-
-					b.ResetTimer()
 
 					for i := 0; i < b.N; i++ {
-						for split := ipx.Split(ipN, c.newPrefix); split.Next(&tgt); {
+						for split := ipx.Split(ipN, c.newPrefix); split.Next(); {
 						}
 					}
 
@@ -81,9 +77,8 @@ func BenchmarkSplit(b *testing.B) {
 func ExampleAddresses() {
 	c := cidr("10.0.0.0/30")
 	addrs := ipx.Addresses(c)
-	ip := make(net.IP, net.IPv4len)
-	for addrs.Next(ip) {
-		fmt.Println(ip)
+	for addrs.Next() {
+		fmt.Println(addrs.IP())
 	}
 	// Output:
 	// 10.0.0.0
@@ -119,12 +114,8 @@ func BenchmarkAddresses(b *testing.B) {
 				b.Run(fmt.Sprint(ones), func(b *testing.B) {
 					b.ReportAllocs()
 
-					ip := make(net.IP, len(ipN.IP))
-
-					b.ResetTimer()
-
 					for i := 0; i < b.N; i++ {
-						for hosts := ipx.Addresses(ipN); hosts.Next(ip); {
+						for hosts := ipx.Addresses(ipN); hosts.Next(); {
 						}
 					}
 				})
@@ -136,9 +127,8 @@ func BenchmarkAddresses(b *testing.B) {
 func ExampleHosts() {
 	c := cidr("10.0.0.0/29")
 	hosts := ipx.Hosts(c)
-	ip := make(net.IP, net.IPv4len)
-	for hosts.Next(ip) {
-		fmt.Println(ip)
+	for hosts.Next() {
+		fmt.Println(hosts.IP())
 	}
 	// Output:
 	// 10.0.0.1
@@ -152,9 +142,8 @@ func ExampleHosts() {
 func ExampleHosts_IP6() {
 	c := cidr("::/125")
 	hosts := ipx.Hosts(c)
-	ip := make(net.IP, len(c.IP))
-	for hosts.Next(ip) {
-		fmt.Println(ip)
+	for hosts.Next() {
+		fmt.Println(hosts.IP())
 	}
 	// Output:
 	// ::1
@@ -192,12 +181,8 @@ func BenchmarkHosts(b *testing.B) {
 				b.Run(fmt.Sprint(ones), func(b *testing.B) {
 					b.ReportAllocs()
 
-					ip := make(net.IP, len(ipN.IP))
-
-					b.ResetTimer()
-
 					for i := 0; i < b.N; i++ {
-						for hosts := ipx.Hosts(ipN); hosts.Next(ip); {
+						for hosts := ipx.Hosts(ipN); hosts.Next(); {
 						}
 					}
 				})
