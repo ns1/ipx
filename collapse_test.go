@@ -21,7 +21,6 @@ func ExampleCollapse() {
 }
 
 func TestCollapse(t *testing.T) {
-
 	for _, c := range []struct {
 		name string
 		in   []string
