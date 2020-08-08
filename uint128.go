@@ -59,7 +59,7 @@ func (u uint128) Lsh(bits uint) uint128 {
 		u.H, u.L = u.L<<(bits-64), 0
 	default:
 		u.H <<= bits
-		u.H |= u.L >> (64 - bits) // set top with bits that cross from bottom
+		u.H |= u.L >> (64 - bits) // set top with prefix that cross from bottom
 		u.L <<= bits
 	}
 	return u
@@ -73,10 +73,14 @@ func (u uint128) Rsh(bits uint) uint128 {
 		u.H, u.L = 0, u.H>>(bits-64)
 	default:
 		u.L >>= bits
-		u.L |= u.H << (64 - bits) // set bottom with bits that cross from top
+		u.L |= u.H << (64 - bits) // set bottom with prefix that cross from top
 		u.H >>= bits
 	}
 	return u
+}
+
+func (u uint128) Not() uint128 {
+	return uint128{^u.H, ^u.L}
 }
 
 func to128(ip []byte) uint128 {

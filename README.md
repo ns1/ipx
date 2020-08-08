@@ -7,6 +7,19 @@
 Extending ip operations for Go to support common operations.
 
 ```go
+func ExampleCollapse() {
+	fmt.Println(ipx.Collapse(
+		[]*net.IPNet{
+			cidr("192.0.2.0/26"),
+			cidr("192.0.2.64/26"),
+			cidr("192.0.2.128/26"),
+			cidr("192.0.2.192/26"),
+		},
+	))
+	// Output:
+	// [192.0.2.0/24]
+}
+
 func ExampleSplit() {
 	c := cidr("10.0.0.0/24")
 	splitter := ipx.Split(c, 26)
