@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/jwilner/ipx)](https://goreportcard.com/report/github.com/jwilner/ipx)
 [![GoDoc](https://godoc.org/github.com/jwilner/ipx?status.svg)](https://godoc.org/github.com/jwilner/ipx)
 
-Extending ip operations for Go to support common operations.
+Extending IP address support for Go.
 
 ```go
 func ExampleCollapse() {
