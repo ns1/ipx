@@ -32,6 +32,12 @@ func ExampleSplit() {
 	// 10.0.0.128/26
 	// 10.0.0.192/26
 }
+
+func ExampleSummarizeRange() {
+	fmt.Println(ipx.SummarizeRange(net.ParseIP("192.0.2.0"), net.ParseIP("192.0.2.130")))
+	// Output:
+	// [192.0.2.0/25 192.0.2.128/31 192.0.2.130/32]
+}
 ```
 
 See example tests for more usage.
