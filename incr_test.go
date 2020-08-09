@@ -47,6 +47,28 @@ func BenchmarkIncrIP(b *testing.B) {
 
 }
 
+func TestIncrIP(t *testing.T) {
+	for _, c := range []struct {
+		name, in string
+		incr     int
+		out      string
+	}{
+		{"ipv4 add", "0.0.0.0", 257, "0.0.1.1"},
+		{"ipv4 minus", "0.0.1.1", -257, "0.0.0.0"},
+		{"ipv6 add", "::", 1 << 32, "::1:0:0"},
+		{"ipv6 minus", "::1:0:0", -(1 << 32), "::"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ip := net.ParseIP(c.in)
+			ipx.IncrIP(ip, c.incr)
+			out := ip.String()
+			if c.out != out {
+				t.Fatalf("wanted %v but got %v", c.out, out)
+			}
+		})
+	}
+}
+
 func ExampleIncrIP() {
 	ip := net.ParseIP("0.0.0.0")
 	ipx.IncrIP(ip, 257)
@@ -61,6 +83,28 @@ func ExampleIncrIP_IP6() {
 	fmt.Println(ip)
 	// Output:
 	// ::1:0:0
+}
+
+func TestIncrNet(t *testing.T) {
+	for _, c := range []struct {
+		name, in string
+		incr     int
+		out      string
+	}{
+		{"ipv4 add", "10.0.0.0/16", 2, "10.2.0.0/16"},
+		{"ipv4 minus", "10.2.0.0/16", -2, "10.0.0.0/16"},
+		{"ipv6 add", "::/32", 2, "0:2::/32"},
+		{"ipv6 minus", "0:2::/32", -2, "::/32"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, in, _ := net.ParseCIDR(c.in)
+			ipx.IncrNet(in, c.incr)
+			out := in.String()
+			if c.out != out {
+				t.Fatalf("wanted %v but got %v", c.out, out)
+			}
+		})
+	}
 }
 
 func ExampleIncrNet() {

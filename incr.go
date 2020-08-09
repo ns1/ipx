@@ -15,7 +15,7 @@ func IncrIP(ip net.IP, incr int) {
 		if incr >= 0 {
 			n += uint32(incr)
 		} else {
-			n -= uint32(incr)
+			n -= uint32(incr * -1)
 		}
 		from32(n, ip)
 		return
@@ -47,7 +47,7 @@ func IncrNet(ipNet *net.IPNet, incr int) {
 		if incr >= 0 {
 			n += uint32(incr)
 		} else {
-			n -= uint32(incr)
+			n -= uint32(incr * -1)
 		}
 		from32(n<<suffix, ipNet.IP)
 		return
