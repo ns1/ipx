@@ -23,8 +23,8 @@ func ExampleCollapse() {
 func ExampleSplit() {
 	c := cidr("10.0.0.0/24")
 	splitter := ipx.Split(c, 26)
-	for splitter.Next(c) {
-		fmt.Println(c)
+	for splitter.Next() {
+		fmt.Println(splitter.Net())
 	}
 	// Output:
 	// 10.0.0.0/26
