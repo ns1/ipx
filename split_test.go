@@ -3,6 +3,7 @@ package ipx_test
 import (
 	"fmt"
 	"github.com/jwilner/ipx"
+	"net"
 	"testing"
 )
 
@@ -67,7 +68,6 @@ func BenchmarkSplit(b *testing.B) {
 						for split := ipx.Split(ipN, c.newPrefix); split.Next(); {
 						}
 					}
-
 				})
 			}
 		})
@@ -85,6 +85,46 @@ func ExampleAddresses() {
 	// 10.0.0.1
 	// 10.0.0.2
 	// 10.0.0.3
+}
+
+func TestAddresses(t *testing.T) {
+	for _, c := range []struct {
+		name, net string
+		expected  []string
+	}{
+		{"ipv4 30", "10.0.0.0/30", []string{"10.0.0.0", "10.0.0.1", "10.0.0.2", "10.0.0.3"}},
+		{"ipv4 32", "10.0.0.3/32", []string{"10.0.0.3"}},
+		{
+			"ipv6 126",
+			"1bc1:6d67:4ec8::/126",
+			[]string{
+				"1bc1:6d67:4ec8::",
+				"1bc1:6d67:4ec8::1",
+				"1bc1:6d67:4ec8::2",
+				"1bc1:6d67:4ec8::3",
+			},
+		},
+		{"ipv6 128", "1bc1:6d67:4ec8::3/128", []string{"1bc1:6d67:4ec8::3"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, ipN, _ := net.ParseCIDR(c.net)
+
+			var ips []string
+			iter := ipx.Addresses(ipN)
+			for iter.Next() {
+				ips = append(ips, iter.IP().String())
+			}
+
+			if len(c.expected) != len(ips) {
+				t.Fatalf("expected %v addresses but got %v: %v", len(c.expected), len(ips), ips)
+			}
+			for i := range ips {
+				if ips[i] != c.expected[i] {
+					t.Errorf("expected %v at position %d but got %v", c.expected[i], i, ips[i])
+				}
+			}
+		})
+	}
 }
 
 func BenchmarkAddresses(b *testing.B) {
