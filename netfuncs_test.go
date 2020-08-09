@@ -7,6 +7,25 @@ import (
 	"testing"
 )
 
+func TestSupernet(t *testing.T) {
+	for _, c := range []struct {
+		name, in  string
+		newPrefix int
+		out       string
+	}{
+		{"ipv4 one level", "10.0.0.128/25", 24, "10.0.0.0/24"},
+		{"ipv6 one level", "29a2:241a:f62c::/64", 44, "29a2:241a:f620::/44"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, ipN, _ := net.ParseCIDR(c.in)
+			out := ipx.Supernet(ipN, c.newPrefix).String()
+			if out != c.out {
+				t.Fatalf("wanted %v but got %v", c.out, out)
+			}
+		})
+	}
+}
+
 func ExampleSupernet() {
 	ipN := cidr("192.0.2.0/24")
 	super := ipx.Supernet(ipN, 20)
@@ -60,6 +79,23 @@ func ExampleBroadcast() {
 	fmt.Println(ipx.Broadcast(ipN))
 	// Output:
 	// 10.0.1.255
+}
+
+func TestBroadcast(t *testing.T) {
+	for _, c := range []struct {
+		name, in, out string
+	}{
+		{"ipv4", "10.0.1.0/24", "10.0.1.255"},
+		{"ipv6", "29a2:241a:f620::/44", "29a2:241a:f62f:ffff:ffff:ffff:ffff:ffff"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, in, _ := net.ParseCIDR(c.in)
+			out := ipx.Broadcast(in).String()
+			if out != c.out {
+				t.Fatalf("wanted %v but got %v", c.out, out)
+			}
+		})
+	}
 }
 
 func BenchmarkBroadcast(b *testing.B) {
