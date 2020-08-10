@@ -73,20 +73,6 @@ func summarizeRange6(first, last uint128) (nets []*net.IPNet) {
 	return
 }
 
-func countBits(i uint64) (bits uint64) {
-	for i>>bits != 0 {
-		bits++
-	}
-	return
-}
-
-func countBits128(i uint128) (bits uint64) {
-	if highBits := countBits(i.H); highBits > 0 {
-		return highBits + 64
-	}
-	return countBits(i.L)
-}
-
 func trailingZeros128(i uint128) int {
 	trailingZeros := b.TrailingZeros64(i.L)
 	if trailingZeros == 64 {
