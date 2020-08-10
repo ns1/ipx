@@ -38,6 +38,17 @@ func ExampleSummarizeRange() {
 	// Output:
 	// [192.0.2.0/25 192.0.2.128/31 192.0.2.130/32]
 }
+
+func ExampleExclude() {
+	fmt.Println(
+		ipx.Exclude(
+			cidr("10.1.1.0/24"),
+			cidr("10.1.1.0/26"),
+		),
+	)
+	// Output:
+	// [10.1.1.128/25 10.1.1.64/26]
+}
 ```
 
 See example tests for more usage.

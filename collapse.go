@@ -136,6 +136,16 @@ func (n ip4Net) asNet() *net.IPNet {
 	return r
 }
 
+func (n ip4Net) subnets() (ip4Net, ip4Net) {
+	a := ip4Net{addr: n.addr, prefix: n.prefix + 1}
+	b := ip4Net{addr: n.addr | 1<<(31-n.prefix), prefix: n.prefix + 1}
+	return a, b
+}
+
+func (n ip4Net) subnetOf(o ip4Net) bool {
+	return n.addr&o.mask() == o.addr
+}
+
 func (n ip4Net) mask() uint32 {
 	return ^(1<<(32-n.prefix) - 1)
 }
@@ -171,6 +181,12 @@ func (n ip6Net) super() ip6Net {
 	return n
 }
 
+func (n ip6Net) subnets() (ip6Net, ip6Net) {
+	a := ip6Net{addr: n.addr, prefix: n.prefix + 1}
+	b := ip6Net{addr: n.addr.Or(uint128{0, 1}.Lsh(uint(127 - n.prefix))), prefix: n.prefix + 1}
+	return a, b
+}
+
 func (n ip6Net) asNet() *net.IPNet {
 	r := &net.IPNet{IP: make(net.IP, 16), Mask: make(net.IPMask, 16)}
 	from128(n.addr, r.IP)
@@ -180,6 +196,10 @@ func (n ip6Net) asNet() *net.IPNet {
 
 func (n ip6Net) mask() uint128 {
 	return uint128{0, 1}.Lsh(128 - uint(n.prefix)).Minus(uint128{0, 1}).Not()
+}
+
+func (n ip6Net) subnetOf(o ip6Net) bool {
+	return n.addr.And(o.mask()).Cmp(o.addr) == 0
 }
 
 type ip6Nets []ip6Net
