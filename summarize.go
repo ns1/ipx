@@ -33,7 +33,7 @@ func summarizeRange4(first, last uint32) (nets []*net.IPNet) {
 			}
 		}
 
-		ipN := net.IPNet{IP: make(net.IP, len(net.IPv4zero)), Mask: net.CIDRMask(int(32-bits), 32)}
+		ipN := net.IPNet{IP: make(net.IP, len(net.IPv4zero)), Mask: net.CIDRMask(32-bits, 32)}
 
 		ipN.IP = ipN.IP[:4]
 		from32(first, ipN.IP)
@@ -49,18 +49,18 @@ func summarizeRange4(first, last uint32) (nets []*net.IPNet) {
 
 func summarizeRange6(first, last uint128) (nets []*net.IPNet) {
 	for first.Cmp(last) != 1 {
-		bits := uint64(128)
-		if trailingZeros := countBits128(first.Minus(uint128{0, 1}).And(first.Not())); trailingZeros < bits {
+		bits := 128
+		if trailingZeros := trailingZeros128(first); trailingZeros < bits {
 			bits = trailingZeros
 		}
 		// check extremes to make sure no overflow
 		if first.Cmp(uint128{0, 0}) != 0 || last.Cmp(uint128{maxUint64, maxUint64}) != 0 {
-			if diffBits := countBits128(last.Minus(first).Add(uint128{0, 1})) - 1; diffBits < bits {
+			if diffBits := 127 - leadingZeros128(last.Minus(first).Add(uint128{0, 1})); diffBits < bits {
 				bits = diffBits
 			}
 		}
 
-		ipN := net.IPNet{IP: make(net.IP, net.IPv6len), Mask: net.CIDRMask(int(128-bits), 128)}
+		ipN := net.IPNet{IP: make(net.IP, net.IPv6len), Mask: net.CIDRMask(128-bits, 128)}
 
 		from128(first, ipN.IP)
 		nets = append(nets, &ipN)
@@ -85,4 +85,20 @@ func countBits128(i uint128) (bits uint64) {
 		return highBits + 64
 	}
 	return countBits(i.L)
+}
+
+func trailingZeros128(i uint128) int {
+	trailingZeros := b.TrailingZeros64(i.L)
+	if trailingZeros == 64 {
+		trailingZeros += b.TrailingZeros64(i.H)
+	}
+	return trailingZeros
+}
+
+func leadingZeros128(i uint128) int {
+	leadingZeros := b.LeadingZeros64(i.H)
+	if leadingZeros == 64 {
+		leadingZeros += b.LeadingZeros64(i.L)
+	}
+	return leadingZeros
 }
