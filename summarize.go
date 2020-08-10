@@ -10,7 +10,7 @@ import (
 func SummarizeRange(first, last net.IP) []*net.IPNet {
 	four := first.To4() != nil
 	if four != (last.To4() != nil) {
-		panic("addresses must be same version")
+		return nil // versions must be the same
 	}
 	if four {
 		return summarizeRange4(to32(first), to32(last))

@@ -98,7 +98,7 @@ func IterIP(ip net.IP, incr int) *IPIter {
 		uIncr = uint128{0, uint64(incr)}
 		limit = uint128{maxUint64, maxUint64}
 	}
-	return iterIPv6(to128(ip), uIncr, limit, )
+	return iterIPv6(to128(ip), uIncr, limit)
 }
 
 func iterIPv4(val, incr, limit uint32) *IPIter {
@@ -171,12 +171,12 @@ func IterNet(ipNet *net.IPNet, incr int) *NetIter {
 	}
 	if incr < 0 {
 		return &NetIter{
-			*iterIPv6(to128(ipNet.IP), uint128{0, uint64(incr * -1)}.Lsh(suffix), uint128{}, ),
+			*iterIPv6(to128(ipNet.IP), uint128{0, uint64(incr * -1)}.Lsh(suffix), uint128{}),
 			&net.IPNet{Mask: mask},
 		}
 	}
 	return &NetIter{
-		*iterIPv6(to128(ipNet.IP), uint128{0, uint64(incr)}.Lsh(suffix), uint128{maxUint64, maxUint64}, ),
+		*iterIPv6(to128(ipNet.IP), uint128{0, uint64(incr)}.Lsh(suffix), uint128{maxUint64, maxUint64}),
 		&net.IPNet{Mask: mask},
 	}
 }

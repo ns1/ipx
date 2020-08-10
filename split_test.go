@@ -7,6 +7,57 @@ import (
 	"testing"
 )
 
+func TestSplit(t *testing.T) {
+	for _, c := range []struct {
+		name, net string
+		newPrefix int
+		expected  []string
+	}{
+		{
+			"no-op",
+			"10.0.0.0/24",
+			24,
+			[]string{"10.0.0.0/24"},
+		},
+		{
+			"invalid prefix",
+			"10.0.0.0/24",
+			23,
+			[]string{},
+		},
+		{
+			"ipv4",
+			"10.0.0.0/24",
+			26,
+			[]string{"10.0.0.0/26", "10.0.0.64/26", "10.0.0.128/26", "10.0.0.192/26"},
+		},
+		{
+			"ipv6",
+			"::/24",
+			26,
+			[]string{"::/26", "0:40::/26", "0:80::/26", "0:c0::/26"},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			var nets []string
+			splitter := ipx.Split(cidr(c.net), c.newPrefix)
+			for splitter.Next() {
+				nets = append(nets, splitter.Net().String())
+			}
+
+			if len(nets) != len(c.expected) {
+				t.Fatalf("expected %v nets but got %v nets: %v", len(c.expected), len(nets), nets)
+			}
+
+			for i := range nets {
+				if c.expected[i] != nets[i] {
+					t.Errorf("expected %v at position %v but got %v", c.expected[i], i, nets[i])
+				}
+			}
+		})
+	}
+}
+
 func ExampleSplit() {
 	c := cidr("10.0.0.0/24")
 	split := ipx.Split(c, 26)

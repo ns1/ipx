@@ -1,7 +1,6 @@
 package ipx
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -9,7 +8,7 @@ import (
 func Split(ipNet *net.IPNet, newPrefix int) *NetIter {
 	ones, bits := ipNet.Mask.Size()
 	if ones > newPrefix || newPrefix > bits {
-		panic(fmt.Errorf("must be in [%v, %v] but got %v", ones, bits, newPrefix))
+		return new(NetIter)
 	}
 	if ipNet.IP.To4() != nil {
 		ip := to32(ipNet.IP)

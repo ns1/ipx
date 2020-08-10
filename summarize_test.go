@@ -82,6 +82,7 @@ func TestSummarizeRange(t *testing.T) {
 		first, last string
 		results     []string
 	}{
+		{"mismatched versions", "0.0.0.0", "::", []string{}},
 		{"no overlap", "192.0.2.1", "192.0.2.0", []string{}},
 		{
 			"simple",
@@ -125,6 +126,20 @@ func TestSummarizeRange(t *testing.T) {
 			"::",
 			"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 			[]string{"::/0"},
+		},
+		{
+			"ipv6 odd start",
+			"1::1",
+			"1::30",
+			[]string{
+				"1::1/128",
+				"1::2/127",
+				"1::4/126",
+				"1::8/125",
+				"1::10/124",
+				"1::20/124",
+				"1::30/128",
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
