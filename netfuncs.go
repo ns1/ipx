@@ -1,7 +1,6 @@
 package ipx
 
 import (
-	"errors"
 	"net"
 )
 
@@ -9,7 +8,7 @@ import (
 func Supernet(ipN *net.IPNet, newPrefix int) *net.IPNet {
 	ones, bits := ipN.Mask.Size()
 	if newPrefix < 0 || newPrefix > ones || newPrefix > bits {
-		panic(errors.New("new prefix must be less than current"))
+		return nil
 	}
 
 	out := net.IPNet{

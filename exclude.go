@@ -4,7 +4,8 @@ import "net"
 
 // Exclude returns a list of networks representing the address block when `b` is removed from `a`.
 func Exclude(a, b *net.IPNet) []*net.IPNet {
-	if !IsSubnet(a, b) { // also enforces version match
+	four := a.IP.To4() != nil
+	if four != (b.IP.To4() != nil) || !IsSubnet(a, b) {
 		return []*net.IPNet{a}
 	}
 	if a.IP.To4() != nil {

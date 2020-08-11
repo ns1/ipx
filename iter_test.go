@@ -9,11 +9,11 @@ import (
 
 func ExampleIterIP() {
 	ip := net.ParseIP("10.0.0.0")
-	for i, iter := 0, ipx.IterIP(ip, 100); i < 5 && iter.Next(); i++ {
+	for i, iter := 0, ipx.IterIP(ip, 100, nil); i < 5 && iter.Next(); i++ {
 		ip = iter.IP()
 		fmt.Println(ip)
 	}
-	for i, iter := 0, ipx.IterIP(ip, -100); i < 5 && iter.Next(); i++ {
+	for i, iter := 0, ipx.IterIP(ip, -100, nil); i < 5 && iter.Next(); i++ {
 		fmt.Println(iter.IP())
 	}
 	// Output:
@@ -31,11 +31,11 @@ func ExampleIterIP() {
 
 func ExampleIterIP_IP6() {
 	ip := net.ParseIP("::")
-	for i, iter := 0, ipx.IterIP(ip, 1e18); i < 5 && iter.Next(); i++ {
+	for i, iter := 0, ipx.IterIP(ip, 1e18, nil); i < 5 && iter.Next(); i++ {
 		ip = iter.IP()
 		fmt.Println(ip)
 	}
-	for i, iter := 0, ipx.IterIP(ip, -1e18); i < 5 && iter.Next(); i++ {
+	for i, iter := 0, ipx.IterIP(ip, -1e18, nil); i < 5 && iter.Next(); i++ {
 		fmt.Println(iter.IP())
 	}
 	// Output:
@@ -79,10 +79,10 @@ func BenchmarkIterIP(b *testing.B) {
 				b.Run(fmt.Sprint(c.incr), func(b *testing.B) {
 					b.ReportAllocs()
 
-					iter := ipx.IterIP(ip, c.incr)
+					iter := ipx.IterIP(ip, c.incr, nil)
 					for i := 0; i < b.N; i++ {
 						if !iter.Next() {
-							iter = ipx.IterIP(iter.IP(), c.incr)
+							iter = ipx.IterIP(iter.IP(), c.incr, nil)
 						}
 					}
 				})

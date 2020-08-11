@@ -71,34 +71,68 @@ func (i *IPIter) Next() bool {
 	return true
 }
 
-// IterIP returns an Iter for the given increment over the IPs
-func IterIP(ip net.IP, incr int) *IPIter {
-	if ip.To4() != nil {
-		var (
-			uIncr uint32
-			limit uint32
-		)
-		if incr < 0 {
-			uIncr = uint32(incr * -1)
-			limit = 0
-		} else {
-			uIncr = uint32(incr)
-			limit = maxUint32
+// IterIP returns an iter for the given step from [start, end). If end is nil, it is set to the maximum type for
+// the version. If the step is zero, IP versions mismatch or the sign of the increment doesn't match that of
+// end - start, an empty iter is returned.
+func IterIP(start net.IP, step int, end net.IP) *IPIter {
+	if step == 0 {
+		return new(IPIter)
+	}
+
+	if start.To4() != nil {
+		ip := to32(start)
+		if step > 0 {
+			limit := uint32(maxUint32)
+			if end != nil {
+				if end.To4() == nil {
+					return new(IPIter)
+				}
+				limit = to32(end)
+				if limit <= ip {
+					return new(IPIter)
+				}
+			}
+			return iterIPv4(ip, uint32(step), limit)
 		}
-		return iterIPv4(to32(ip), uIncr, limit)
+		limit := uint32(0)
+		if end != nil {
+			if end.To4() != nil {
+				return new(IPIter)
+			}
+			limit = to32(end)
+			if limit >= ip {
+				return new(IPIter)
+			}
+		}
+		return iterIPv4(ip, uint32(step*-1), limit)
 	}
-	var (
-		uIncr uint128
-		limit uint128
-	)
-	if incr < 0 {
-		uIncr = uint128{0, uint64(incr * -1)}
-		limit = uint128{}
-	} else {
-		uIncr = uint128{0, uint64(incr)}
-		limit = uint128{maxUint64, maxUint64}
+
+	ip := to128(start)
+	if step > 0 {
+		limit := uint128{maxUint64, maxUint64}
+		if end != nil {
+			if end.To4() == nil {
+				return new(IPIter)
+			}
+			limit = to128(end)
+			if limit.Cmp(ip) != 1 {
+				return new(IPIter)
+			}
+		}
+		return iterIPv6(ip, uint128{0, uint64(step)}, limit)
 	}
-	return iterIPv6(to128(ip), uIncr, limit)
+
+	limit := uint128{}
+	if end != nil {
+		if end.To4() != nil {
+			return new(IPIter)
+		}
+		limit = to128(end)
+		if limit.Cmp(ip) != -1 {
+			return new(IPIter)
+		}
+	}
+	return iterIPv6(ip, uint128{0, uint64(step * -1)}, limit)
 }
 
 func iterIPv4(val, incr, limit uint32) *IPIter {

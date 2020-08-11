@@ -67,6 +67,30 @@ func TestIncrIP(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("nil illegal", func(t *testing.T) {
+		p := grabPanic(func() {
+			ipx.IncrIP(nil, 1)
+		})
+		if p == nil {
+			t.Fatal("expected a panic")
+		}
+		err, ok := p.(error)
+		if !ok {
+			t.Fatalf("expected an error in panic but got %T", err)
+		}
+		if err.Error() != "IP cannot be nil" {
+			t.Fatalf("unexpected error message: %v", err)
+		}
+	})
+}
+
+func grabPanic(f func()) (p interface{}) {
+	defer func() {
+		p = recover()
+	}()
+	f()
+	return
 }
 
 func ExampleIncrIP() {
@@ -105,6 +129,38 @@ func TestIncrNet(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("nil IP panics", func(t *testing.T) {
+		p := grabPanic(func() {
+			ipx.IncrNet(&net.IPNet{Mask: net.CIDRMask(32, 32)}, 1)
+		})
+		if p == nil {
+			t.Fatal("expected panic")
+		}
+		err, ok := p.(error)
+		if !ok {
+			t.Fatalf("expected error but got %T", err)
+		}
+		if err.Error() != "IP cannot be nil" {
+			t.Fatalf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("nil mask panics", func(t *testing.T) {
+		p := grabPanic(func() {
+			ipx.IncrNet(&net.IPNet{IP: make(net.IP, 16)}, 1)
+		})
+		if p == nil {
+			t.Fatal("expected panic")
+		}
+		err, ok := p.(error)
+		if !ok {
+			t.Fatalf("expected error but got %T", err)
+		}
+		if err.Error() != "mask cannot be nil" {
+			t.Fatalf("unexpected error message: %v", err)
+		}
+	})
 }
 
 func ExampleIncrNet() {

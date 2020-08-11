@@ -1,32 +1,29 @@
 package ipx
 
 import (
-	"errors"
 	"net"
 	"sort"
 )
 
-// Collapse combines subnets into their closest available parent. All networks must of the same type.
+// Collapse combines subnets into their closest available parent.
 func Collapse(toMerge []*net.IPNet) []*net.IPNet {
-	if len(toMerge) == 0 {
-		return nil
-	}
-	four := toMerge[0].IP.To4() != nil
-	for _, ipN := range toMerge[1:] {
-		if four != (ipN.IP.To4() != nil) {
-			panic(errors.New("all versions must be the same"))
+	var (
+		four []ip4Net
+		six  []ip6Net
+	)
+	for _, ipN := range toMerge {
+		if ipN.IP.To4() != nil {
+			four = append(four, newIP4Net(ipN))
+			continue
 		}
+		six = append(six, newIP6Net(ipN))
 	}
-	if four {
-		return collapse4(toMerge)
-	}
-	return collapse6(toMerge)
+	return append(collapse4(four), collapse6(six)...)
 }
 
-func collapse4(toMerge []*net.IPNet) []*net.IPNet {
-	nets := make([]ip4Net, 0, len(toMerge))
-	for _, m := range toMerge {
-		nets = append(nets, newIP4Net(m))
+func collapse4(nets []ip4Net) []*net.IPNet {
+	if len(nets) == 0 {
+		return nil
 	}
 
 	supers := make(map[ip4Net]ip4Net)
@@ -68,10 +65,9 @@ func collapse4(toMerge []*net.IPNet) []*net.IPNet {
 	return result
 }
 
-func collapse6(toMerge []*net.IPNet) []*net.IPNet {
-	nets := make([]ip6Net, 0, len(toMerge))
-	for _, m := range toMerge {
-		nets = append(nets, newIP6Net(m))
+func collapse6(nets []ip6Net) []*net.IPNet {
+	if len(nets) == 0 {
+		return nil
 	}
 
 	supers := make(map[ip6Net]ip6Net)
