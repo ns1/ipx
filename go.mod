@@ -1,3 +1,3 @@
-module github.com/jwilner/ipx
+module github.com/ns1/ipx
 
 go 1.14

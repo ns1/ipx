@@ -2,7 +2,7 @@ package ipx_test
 
 import (
 	"fmt"
-	"github.com/jwilner/ipx"
+	"github.com/ns1/ipx"
 	"testing"
 )
 

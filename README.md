@@ -1,8 +1,8 @@
 # ipx
 
-[![Tests](https://github.com/jwilner/ipx/workflows/tests/badge.svg)](https://github.com/jwilner/ipx/workflows/tests/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jwilner/ipx)](https://goreportcard.com/report/github.com/jwilner/ipx)
-[![GoDoc](https://godoc.org/github.com/jwilner/ipx?status.svg)](https://godoc.org/github.com/jwilner/ipx)
+[![Tests](https://github.com/ns1/ipx/workflows/tests/badge.svg)](https://github.com/ns1/ipx/workflows/tests/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ns1/ipx)](https://goreportcard.com/report/github.com/ns1/ipx)
+[![GoDoc](https://godoc.org/github.com/ns1/ipx?status.svg)](https://godoc.org/github.com/ns1/ipx)
 
 Extending IP address support for Go.
 
