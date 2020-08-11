@@ -8,7 +8,7 @@ func Exclude(a, b *net.IPNet) []*net.IPNet {
 	if four != (b.IP.To4() != nil) || !IsSubnet(a, b) {
 		return []*net.IPNet{a}
 	}
-	if a.IP.To4() != nil {
+	if four {
 		return exclude4(newIP4Net(a), newIP4Net(b))
 	}
 	return exclude6(newIP6Net(a), newIP6Net(b))
